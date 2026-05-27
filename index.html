@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TextVault</title>
+    <style>
+        /* Default Light Mode Variables */
+        :root {
+            --bg-color: #f4f7f6;
+            --surface-color: #ffffff;
+            --primary: #007bff;
+            --primary-dark: #0056b3;
+            --text-main: #333333;
+            --text-muted: #6c757d;
+            --border-color: #ccc;
+            --input-bg: #ffffff;
+            --output-bg: #e9ecef;
+        }
+
+        /* Dark Mode Variables */
+        body.dark-mode {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary: #339af0; /* Slightly lighter blue for dark backgrounds */
+            --primary-dark: #228be6;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-color: #444444;
+            --input-bg: #2b2b2b;
+            --output-bg: #2b2b2b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: background-color 0.3s;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            resize: none;
+            margin-bottom: 15px;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Segmented Control Styles */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .control-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .segmented-control {
+            display: flex;
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .segmented-control input[type="radio"] {
+            display: none;
+        }
+
+        .segmented-control label {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            background-color: transparent;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            border-right: 1px solid var(--primary);
+        }
+
+        .segmented-control label:last-of-type {
+            border-right: none;
+        }
+
+        .segmented-control input[type="radio"]:checked + label {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+
+        /* Action Buttons */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:active {
+            background-color: var(--primary-dark);
+        }
+
+        .output-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .output-box {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            background-color: var(--output-bg);
+            color: var(--text-main);
+            border-radius: 8px;
+            word-wrap: break-word;
+            font-size: 16px;
+            -webkit-user-select: text;
+            user-select: text; 
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Bulletproof Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background-color: #323232;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            text-align: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none; /* Prevents interaction when hidden */
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>TextVault</h2>
+        
+        <textarea id="inputText" placeholder="Enter text here..."></textarea>
+
+        <div class="controls-row">
+            <span class="control-label">Security Layer:</span>
+            <div class="segmented-control">
+                <input type="radio" id="x1" name="multiplier" value="1" checked>
+                <label for="x1">1x</label>
+                
+                <input type="radio" id="x2" name="multiplier" value="2">
+                <label for="x2">2x</label>
+                
+                <input type="radio" id="x3" name="multiplier" value="3">
+                <label for="x3">3x</label>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button onclick="processText('encrypt')">Encrypt</button>
+            <button style="background-color: #28a745;" onclick="processText('decrypt')">Decrypt</button>
+        </div>
+
+        <span class="output-label">Output (Long press to highlight):</span>
+        <div id="outputText" class="output-box"></div>
+    </div>
+
+    <div id="toast">Copied to clipboard!</div>
+
+    <script>
+        // --- Theme Logic ---
+        function applyTimeBasedTheme() {
+            // Fetch the current time specifically in Manila
+            const manilaTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
+			/*
+			const manilaTimeString = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+			*/
+            const manilaDate = new Date(manilaTimeString);
+            const currentHour = manilaDate.getHours();
+
+            // 6:00 PM (18) to 5:59 AM (5) is Dark Mode
+            if (currentHour >= 18 || currentHour < 6) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+
+        // Run theme check immediately on load
+        applyTimeBasedTheme();
+
+
+        // --- Encryption Logic ---
+        function encrypt(text) {
+            if (!text) return "";
+            return btoa(unescape(encodeURIComponent(text)));
+        }
+
+        function decrypt(encoded) {
+            if (!encoded) return "";
+            try {
+                return decodeURIComponent(escape(atob(encoded)));
+            } catch(e) {
+                return "Error: Invalid scrambled text";
+            }
+        }
+
+        function getMultiplier() {
+            const radios = document.getElementsByName('multiplier');
+            for (let radio of radios) {
+                if (radio.checked) {
+                    return parseInt(radio.value, 10);
+                }
+            }
+            return 1;
+        }
+
+        function processText(action) {
+            const input = document.getElementById('inputText').value;
+            const outputBox = document.getElementById('outputText');
+            const multiplier = getMultiplier();
+            let result = input;
+
+            if (action === 'encrypt') {
+                for (let i = 0; i < multiplier; i++) {
+                    result = encrypt(result);
+                }
+            } else if (action === 'decrypt') {
+                for (let i = 0; i < multiplier; i++) {
+                    result = decrypt(result);
+                    if (result.startsWith("Error:")) {
+                        break;
+                    }
+                }
+            }
+
+            outputBox.innerText = result;
+
+            if (result && !result.startsWith("Error:")) {
+                copyToClipboard(result);
+            }
+        }
+
+        // --- Clipboard Logic ---
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast();
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            } else {
+                let textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast();
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        let toastTimeout;
+        function showToast() {
+            const toast = document.getElementById("toast");
+            
+            // Reset animation if button is spammed
+            clearTimeout(toastTimeout); 
+            
+            toast.classList.add("show");
+            
+            toastTimeout = setTimeout(() => { 
+                toast.classList.remove("show"); 
+            }, 2500);
+        }
+    </script>
+
+</body>
+</html>
