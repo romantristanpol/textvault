@@ -22,7 +22,7 @@
         body.dark-mode {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
-            --primary: #339af0; /* Slightly lighter blue for dark backgrounds */
+            --primary: #339af0;
             --primary-dark: #228be6;
             --text-main: #e0e0e0;
             --text-muted: #a0a0a0;
@@ -186,13 +186,17 @@
             font-size: 14px;
             text-align: center;
             z-index: 9999;
+            
+            visibility: hidden; 
             opacity: 0;
-            pointer-events: none; /* Prevents interaction when hidden */
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none; 
+            
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
         .toast.show {
+            visibility: visible;
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
@@ -228,20 +232,15 @@
         <div id="outputText" class="output-box"></div>
     </div>
 
-    <div id="toast">Copied to clipboard!</div>
+    <div id="toast" class="toast">Copied to clipboard!</div>
 
     <script>
         // --- Theme Logic ---
         function applyTimeBasedTheme() {
-            // Fetch the current time specifically in Manila
             const manilaTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
-			/*
-			const manilaTimeString = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
-			*/
             const manilaDate = new Date(manilaTimeString);
             const currentHour = manilaDate.getHours();
 
-            // 6:00 PM (18) to 5:59 AM (5) is Dark Mode
             if (currentHour >= 18 || currentHour < 6) {
                 document.body.classList.add('dark-mode');
             } else {
@@ -249,7 +248,6 @@
             }
         }
 
-        // Run theme check immediately on load
         applyTimeBasedTheme();
 
 
@@ -334,7 +332,6 @@
         function showToast() {
             const toast = document.getElementById("toast");
             
-            // Reset animation if button is spammed
             clearTimeout(toastTimeout); 
             
             toast.classList.add("show");
