@@ -16,6 +16,7 @@
             --border-color: #ccc;
             --input-bg: #ffffff;
             --output-bg: #e9ecef;
+            --overlay-bg: rgba(0, 0, 0, 0.5);
         }
 
         /* Dark Mode Variables */
@@ -29,6 +30,7 @@
             --border-color: #444444;
             --input-bg: #2b2b2b;
             --output-bg: #2b2b2b;
+            --overlay-bg: rgba(0, 0, 0, 0.7);
         }
 
         * {
@@ -41,15 +43,50 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 20px;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        /* Top Bar (Mobile Only) */
+        .mobile-header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 15px 20px;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-btn svg {
+            width: 28px;
+            height: 28px;
+            fill: currentColor;
+            transition: transform 0.3s;
+        }
+
+        .settings-btn:active svg {
+            transform: rotate(90deg);
+        }
+
+        /* Main Layout */
+        .app-layout {
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            transition: background-color 0.3s, color 0.3s;
+            padding: 0 20px 20px 20px;
+            gap: 20px;
         }
 
-        .container {
+        /* Main App Container */
+        .main-container {
             width: 100%;
             max-width: 500px;
             background: var(--surface-color);
@@ -59,6 +96,95 @@
             transition: background-color 0.3s;
         }
 
+        /* Settings Panel */
+        .settings-panel {
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: background-color 0.3s, transform 0.3s;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .settings-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .close-settings {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 24px;
+            cursor: pointer;
+            display: none; /* Handled by media query */
+        }
+
+        /* Settings Items */
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Standard App UI Elements */
         h2 {
             text-align: center;
             margin-bottom: 20px;
@@ -75,7 +201,7 @@
             border-radius: 8px;
             font-size: 16px;
             resize: none;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
@@ -83,59 +209,13 @@
             color: var(--text-muted);
         }
 
-        /* Segmented Control Styles */
-        .controls-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .control-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .segmented-control {
-            display: flex;
-            border: 1px solid var(--primary);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .segmented-control input[type="radio"] {
-            display: none;
-        }
-
-        .segmented-control label {
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--primary);
-            background-color: transparent;
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
-            border-right: 1px solid var(--primary);
-        }
-
-        .segmented-control label:last-of-type {
-            border-right: none;
-        }
-
-        .segmented-control input[type="radio"]:checked + label {
-            background-color: var(--primary);
-            color: #ffffff;
-        }
-
-        /* Action Buttons */
         .button-group {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
         }
 
-        button {
+        button.action-btn {
             flex: 1;
             padding: 14px;
             border: none;
@@ -148,7 +228,7 @@
             transition: background-color 0.2s;
         }
 
-        button:active {
+        button.action-btn:active {
             background-color: var(--primary-dark);
         }
 
@@ -173,7 +253,18 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Bulletproof Toast Notification */
+        /* Mobile Overlay Backdrop */
+        .overlay-backdrop {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--overlay-bg);
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* Toast */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -186,11 +277,9 @@
             font-size: 14px;
             text-align: center;
             z-index: 9999;
-            
             visibility: hidden; 
             opacity: 0;
             pointer-events: none; 
-            
             transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
@@ -200,58 +289,173 @@
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
+
+        /* =========================================
+           RESPONSIVE DESIGN LOGIC 
+           ========================================= */
+
+        /* Default (Mobile First): Settings is an overlay */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -100%; /* Hidden off-screen */
+            width: 80%;
+            max-width: 350px;
+            height: 100vh;
+            border-radius: 0;
+            z-index: 20;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.2);
+        }
+
+        .settings-panel.open {
+            transform: translateX(-100%);
+        }
+
+        .close-settings {
+            display: block; /* Show 'X' on mobile */
+        }
+
+        .overlay-backdrop.show {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Desktop Mode */
+        @media (min-width: 850px) {
+            .mobile-header {
+                display: none; /* Hide top bar & gear icon */
+            }
+
+            .app-layout {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: center;
+                padding-top: 40px;
+            }
+
+            .main-container {
+                flex: 1;
+                max-width: 500px;
+            }
+
+            .settings-panel {
+                position: static;
+                width: 300px;
+                height: auto;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transform: none; /* Reset mobile transform */
+                right: auto;
+            }
+
+            .close-settings {
+                display: none; /* Hide 'X' on desktop */
+            }
+
+            .overlay-backdrop {
+                display: none !important; /* Never show backdrop on desktop */
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>TextVault</h2>
+    <header class="mobile-header">
+        <button class="settings-btn" onclick="toggleSettings()" aria-label="Settings">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+            </svg>
+        </button>
+    </header>
+
+    <div class="app-layout">
         
-        <textarea id="inputText" placeholder="Enter text here..."></textarea>
+        <div class="main-container">
+            <h2>TextVault</h2>
+            <textarea id="inputText" placeholder="Enter text here..."></textarea>
 
-        <div class="controls-row">
-            <span class="control-label">Security Layer:</span>
-            <div class="segmented-control">
-                <input type="radio" id="x1" name="multiplier" value="1" checked>
-                <label for="x1">1x</label>
-                
-                <input type="radio" id="x2" name="multiplier" value="2">
-                <label for="x2">2x</label>
-                
-                <input type="radio" id="x3" name="multiplier" value="3">
-                <label for="x3">3x</label>
+            <div class="button-group">
+                <button class="action-btn" onclick="processText('encrypt')">Encrypt</button>
+                <button class="action-btn" style="background-color: #28a745;" onclick="processText('decrypt')">Decrypt</button>
             </div>
+
+            <span class="output-label">Output (Long press to highlight):</span>
+            <div id="outputText" class="output-box"></div>
         </div>
 
-        <div class="button-group">
-            <button onclick="processText('encrypt')">Encrypt</button>
-            <button style="background-color: #28a745;" onclick="processText('decrypt')">Decrypt</button>
-        </div>
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-header">
+                <h3>Settings</h3>
+                <button class="close-settings" onclick="toggleSettings()">&times;</button>
+            </div>
 
-        <span class="output-label">Output (Long press to highlight):</span>
-        <div id="outputText" class="output-box"></div>
+            <div class="setting-item">
+                <span class="control-label">Dark Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            </div>
+
     </div>
+
+    <div class="overlay-backdrop" id="overlayBackdrop" onclick="toggleSettings()"></div>
 
     <div id="toast" class="toast">Copied to clipboard!</div>
 
     <script>
-        // --- Theme Logic ---
-        function applyTimeBasedTheme() {
-            const manilaTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
-            const manilaDate = new Date(manilaTimeString);
-            const currentHour = manilaDate.getHours();
+        // --- Settings Menu Logic (Mobile) ---
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            const backdrop = document.getElementById('overlayBackdrop');
+            panel.classList.toggle('open');
+            backdrop.classList.toggle('show');
+        }
 
-            if (currentHour >= 18 || currentHour < 6) {
+
+        // --- Theme Logic ---
+        const themeToggle = document.getElementById('themeToggle');
+
+        function applyTheme(isDark) {
+            if (isDark) {
                 document.body.classList.add('dark-mode');
+                themeToggle.checked = true;
             } else {
                 document.body.classList.remove('dark-mode');
+                themeToggle.checked = false;
             }
         }
 
-        applyTimeBasedTheme();
+        function initTheme() {
+            // Check if user manually saved a preference before
+            const savedTheme = localStorage.getItem('textVaultTheme');
+            
+            if (savedTheme !== null) {
+                applyTheme(savedTheme === 'dark');
+            } else {
+                // Fallback to Manila Time Logic
+                const manilaTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
+                const currentHour = new Date(manilaTimeString).getHours();
+                const isDark = (currentHour >= 18 || currentHour < 6);
+                applyTheme(isDark);
+            }
+        }
+
+        // Listen for manual toggle clicks
+        themeToggle.addEventListener('change', (e) => {
+            const isDark = e.target.checked;
+            applyTheme(isDark);
+            // Save the preference in local storage so it survives page reloads
+            localStorage.setItem('textVaultTheme', isDark ? 'dark' : 'light');
+        });
+
+        // Run on startup
+        initTheme();
 
 
-        // --- Encryption Logic ---
+        // --- Encryption Logic (Hardcoded 3x) ---
         function encrypt(text) {
             if (!text) return "";
             return btoa(unescape(encodeURIComponent(text)));
@@ -266,29 +470,21 @@
             }
         }
 
-        function getMultiplier() {
-            const radios = document.getElementsByName('multiplier');
-            for (let radio of radios) {
-                if (radio.checked) {
-                    return parseInt(radio.value, 10);
-                }
-            }
-            return 1;
-        }
-
         function processText(action) {
             const input = document.getElementById('inputText').value;
             const outputBox = document.getElementById('outputText');
-            const multiplier = getMultiplier();
             let result = input;
 
             if (action === 'encrypt') {
-                for (let i = 0; i < multiplier; i++) {
+                // Hardcoded to loop 3 times
+                for (let i = 0; i < 3; i++) {
                     result = encrypt(result);
                 }
             } else if (action === 'decrypt') {
-                for (let i = 0; i < multiplier; i++) {
+                // Hardcoded to loop 3 times
+                for (let i = 0; i < 3; i++) {
                     result = decrypt(result);
+                    // Abort loop if decyrption fails at any layer
                     if (result.startsWith("Error:")) {
                         break;
                     }
@@ -301,6 +497,7 @@
                 copyToClipboard(result);
             }
         }
+
 
         // --- Clipboard Logic ---
         function copyToClipboard(text) {
@@ -331,11 +528,8 @@
         let toastTimeout;
         function showToast() {
             const toast = document.getElementById("toast");
-            
             clearTimeout(toastTimeout); 
-            
             toast.classList.add("show");
-            
             toastTimeout = setTimeout(() => { 
                 toast.classList.remove("show"); 
             }, 2500);
