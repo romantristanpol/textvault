@@ -119,6 +119,10 @@
             z-index: 20;
             box-shadow: -4px 0 15px rgba(0,0,0,0.2);
             transition: transform 0.3s ease, background-color 0.3s;
+            
+            /* Flex layout allows us to push the clock to the bottom */
+            display: flex;
+            flex-direction: column;
         }
 
         .settings-panel.open {
@@ -204,6 +208,28 @@
             transform: translateX(22px);
         }
 
+        /* Manila Clock Styling */
+        .settings-clock {
+            margin-top: auto; 
+            padding-top: 30px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .clock-label {
+            text-transform: uppercase;
+            font-size: 10px; /* Made slightly smaller */
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        #manilaTime {
+            font-size: 13px; /* Made slightly smaller */
+            font-weight: 600;
+            font-family: monospace; 
+            color: var(--text-main);
+        }
+
         /* Standard App UI Elements */
         h2 {
             text-align: center;
@@ -213,7 +239,7 @@
 
         textarea {
             width: 100%;
-            height: 120px;
+            height: 240px; 
             padding: 12px;
             background-color: var(--input-bg);
             color: var(--text-main);
@@ -373,7 +399,7 @@
             visibility: hidden; 
             opacity: 0;
             pointer-events: none; 
-            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease, background-color 0.3s ease;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
@@ -478,6 +504,11 @@
                     <span class="slider"></span>
                 </label>
             </div>
+
+            <div class="settings-clock">
+                <div class="clock-label">Manila Time</div>
+                <div id="manilaTime">--</div>
+            </div>
         </div>
 
     </div>
@@ -499,12 +530,12 @@
                     Created by Tristan using Gemini AI<br>
                     <a href="https://github.com/romantristanpol/textvault" target="_blank" style="color: var(--primary); text-decoration: none;">View on GitHub</a>
                 </p>
-                <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;"><em>Version 1.1.0</em></p>
+                <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;"><em>Version 1.4.0</em></p>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="toast">Copied to clipboard!</div>
+    <div id="toast" class="toast"></div>
 
     <script>
         // --- Settings Menu Logic (Mobile) ---
@@ -567,7 +598,6 @@
             applyOutputVisibility(savedOutput === 'true');
         }
 
-        // Theme toggle no longer saves to localStorage
         themeToggle.addEventListener('change', (e) => {
             const isDark = e.target.checked;
             applyTheme(isDark);
@@ -580,6 +610,43 @@
         });
 
         initPreferences();
+
+        // --- Manila Clock Logic ---
+        function updateClock() {
+            const clockDisplay = document.getElementById('manilaTime');
+            if (!clockDisplay) return;
+
+            const now = new Date();
+            
+            // Format strictly to get parts we need safely for Manila timezone
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: 'short',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            
+            const parts = formatter.formatToParts(now);
+            const d = {};
+            parts.forEach(part => d[part.type] = part.value);
+
+            // Sometimes 24hr format can output "24" instead of "00" at midnight in some browsers. Safety check:
+            let hr = d.hour;
+            if (hr === '24') hr = '00';
+
+            // Construct exact string: YYYY MMM dd HH:mm:ss
+            const timeString = `${d.year} ${d.month} ${d.day} ${hr}:${d.minute}:${d.second}`;
+
+            clockDisplay.innerText = timeString;
+        }
+
+        // Run clock immediately, then tick every second
+        updateClock();
+        setInterval(updateClock, 1000);
 
 
         // --- Encryption Logic (Hardcoded 3x) ---
@@ -617,17 +684,43 @@
 
             outputBox.innerText = result;
 
-            if (result && !result.startsWith("Error:")) {
-                copyToClipboard(result);
+            // Handle Toasts and Clipboard automatically
+            if (result && result.startsWith("Error:")) {
+                showToast(result, true); // Display error toast in red
+            } else if (result) {
+                let successMessage = action === 'encrypt' 
+                    ? "Text successfully encrypted! Copied to Clipboard." 
+                    : "Text successfully decrypted! Copied to Clipboard.";
+                copyToClipboard(result, successMessage);
             }
         }
 
 
-        // --- Clipboard Logic ---
-        function copyToClipboard(text) {
+        // --- Dynamic Toast & Clipboard Logic ---
+        let toastTimeout;
+        
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            
+            // Set dynamic background color
+            if (isError) {
+                toast.style.backgroundColor = "#dc3545"; // Warning Red
+            } else {
+                toast.style.backgroundColor = "#323232"; // Standard Dark Grey
+            }
+
+            clearTimeout(toastTimeout); 
+            toast.classList.add("show");
+            toastTimeout = setTimeout(() => { 
+                toast.classList.remove("show"); 
+            }, 3000); // Slightly longer to allow reading
+        }
+
+        function copyToClipboard(text, successMessage) {
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => {
-                    showToast();
+                    showToast(successMessage, false);
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
                 });
@@ -641,22 +734,12 @@
                 textArea.select();
                 try {
                     document.execCommand('copy');
-                    showToast();
+                    showToast(successMessage, false);
                 } catch (err) {
                     console.error('Fallback copy failed', err);
                 }
                 document.body.removeChild(textArea);
             }
-        }
-
-        let toastTimeout;
-        function showToast() {
-            const toast = document.getElementById("toast");
-            clearTimeout(toastTimeout); 
-            toast.classList.add("show");
-            toastTimeout = setTimeout(() => { 
-                toast.classList.remove("show"); 
-            }, 2500);
         }
     </script>
 
