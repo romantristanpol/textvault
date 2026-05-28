@@ -119,8 +119,6 @@
             z-index: 20;
             box-shadow: -4px 0 15px rgba(0,0,0,0.2);
             transition: transform 0.3s ease, background-color 0.3s;
-            
-            /* Flex layout allows us to push the clock to the bottom */
             display: flex;
             flex-direction: column;
         }
@@ -212,19 +210,20 @@
         .settings-clock {
             margin-top: auto; 
             padding-top: 30px;
+            padding-bottom: 50px; /* Bumps clock above mobile bottom bars */
             text-align: center;
             color: var(--text-muted);
         }
 
         .clock-label {
             text-transform: uppercase;
-            font-size: 10px; /* Made slightly smaller */
+            font-size: 10px; 
             letter-spacing: 1px;
             margin-bottom: 4px;
         }
 
         #manilaTime {
-            font-size: 13px; /* Made slightly smaller */
+            font-size: 13px; 
             font-weight: 600;
             font-family: monospace; 
             color: var(--text-main);
@@ -239,7 +238,7 @@
 
         textarea {
             width: 100%;
-            height: 240px; 
+            height: 120px; /* Reverted to 120px for mobile */
             padding: 12px;
             background-color: var(--input-bg);
             color: var(--text-main);
@@ -278,7 +277,7 @@
             filter: brightness(0.9);
         }
 
-        /* Output Container (Hidden by default) */
+        /* Output Container */
         #outputContainer {
             display: none;
         }
@@ -383,30 +382,32 @@
             color: var(--text-main);
         }
 
-        /* Toast */
+        /* Toast (Centered) */
         .toast {
             position: fixed;
-            bottom: 30px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%) translateY(20px);
+            transform: translate(-50%, -50%) scale(0.9);
             background-color: #323232;
             color: #ffffff;
-            padding: 12px 24px;
-            border-radius: 24px;
-            font-size: 14px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 15px;
             text-align: center;
             z-index: 9999;
             visibility: hidden; 
             opacity: 0;
             pointer-events: none; 
             transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease, background-color 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            width: 80%;
+            max-width: 320px;
         }
 
         .toast.show {
             visibility: visible;
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translate(-50%, -50%) scale(1);
         }
 
         /* =========================================
@@ -432,6 +433,10 @@
                 max-width: 500px;
             }
 
+            textarea {
+                height: 240px; /* Keep it tall on desktop */
+            }
+
             .settings-panel {
                 position: static;
                 transform: none;
@@ -447,6 +452,10 @@
 
             .overlay-backdrop {
                 display: none !important;
+            }
+
+            .settings-clock {
+                padding-bottom: 0; /* Reset bottom padding for desktop */
             }
         }
     </style>
@@ -530,7 +539,7 @@
                     Created by Tristan using Gemini AI<br>
                     <a href="https://github.com/romantristanpol/textvault" target="_blank" style="color: var(--primary); text-decoration: none;">View on GitHub</a>
                 </p>
-                <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;"><em>Version 1.4.0</em></p>
+                <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;"><em>Version 1.5.0</em></p>
             </div>
         </div>
     </div>
@@ -538,7 +547,6 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        // --- Settings Menu Logic (Mobile) ---
         function toggleSettings() {
             const panel = document.getElementById('settingsPanel');
             const backdrop = document.getElementById('overlayBackdrop');
@@ -546,7 +554,6 @@
             backdrop.classList.toggle('show');
         }
 
-        // --- About Modal Logic ---
         function openModal(id) {
             document.getElementById(id).classList.add('show');
         }
@@ -561,7 +568,6 @@
             }
         }
 
-        // --- User Preferences (Theme & Output Visibility) ---
         const themeToggle = document.getElementById('themeToggle');
         const outputToggle = document.getElementById('outputToggle');
         const outputContainer = document.getElementById('outputContainer');
@@ -587,13 +593,11 @@
         }
 
         function initPreferences() {
-            // Theme preference (NO CACHING) - strictly respects Manila Time on load
             const manilaTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
             const currentHour = new Date(manilaTimeString).getHours();
             const isDark = (currentHour >= 18 || currentHour < 6);
             applyTheme(isDark);
 
-            // Output Visibility preference (Still caches your preference)
             const savedOutput = localStorage.getItem('textVaultShowOutput');
             applyOutputVisibility(savedOutput === 'true');
         }
@@ -611,14 +615,12 @@
 
         initPreferences();
 
-        // --- Manila Clock Logic ---
         function updateClock() {
             const clockDisplay = document.getElementById('manilaTime');
             if (!clockDisplay) return;
 
             const now = new Date();
             
-            // Format strictly to get parts we need safely for Manila timezone
             const formatter = new Intl.DateTimeFormat('en-US', {
                 timeZone: 'Asia/Manila',
                 year: 'numeric',
@@ -634,22 +636,17 @@
             const d = {};
             parts.forEach(part => d[part.type] = part.value);
 
-            // Sometimes 24hr format can output "24" instead of "00" at midnight in some browsers. Safety check:
             let hr = d.hour;
             if (hr === '24') hr = '00';
 
-            // Construct exact string: YYYY MMM dd HH:mm:ss
             const timeString = `${d.year} ${d.month} ${d.day} ${hr}:${d.minute}:${d.second}`;
-
             clockDisplay.innerText = timeString;
         }
 
-        // Run clock immediately, then tick every second
         updateClock();
         setInterval(updateClock, 1000);
 
 
-        // --- Encryption Logic (Hardcoded 3x) ---
         function encrypt(text) {
             if (!text) return "";
             return btoa(unescape(encodeURIComponent(text)));
@@ -684,37 +681,33 @@
 
             outputBox.innerText = result;
 
-            // Handle Toasts and Clipboard automatically
             if (result && result.startsWith("Error:")) {
-                showToast(result, true); // Display error toast in red
+                showToast(result, true); 
             } else if (result) {
                 let successMessage = action === 'encrypt' 
-                    ? "Text successfully encrypted! Copied to Clipboard." 
-                    : "Text successfully decrypted! Copied to Clipboard.";
+                    ? "Text successfully encrypted!\nCopied to Clipboard." 
+                    : "Text successfully decrypted!\nCopied to Clipboard.";
                 copyToClipboard(result, successMessage);
             }
         }
 
-
-        // --- Dynamic Toast & Clipboard Logic ---
         let toastTimeout;
         
         function showToast(message, isError = false) {
             const toast = document.getElementById("toast");
             toast.innerText = message;
             
-            // Set dynamic background color
             if (isError) {
-                toast.style.backgroundColor = "#dc3545"; // Warning Red
+                toast.style.backgroundColor = "#dc3545"; 
             } else {
-                toast.style.backgroundColor = "#323232"; // Standard Dark Grey
+                toast.style.backgroundColor = "#323232"; 
             }
 
             clearTimeout(toastTimeout); 
             toast.classList.add("show");
             toastTimeout = setTimeout(() => { 
                 toast.classList.remove("show"); 
-            }, 3000); // Slightly longer to allow reading
+            }, 3000); 
         }
 
         function copyToClipboard(text, successMessage) {
