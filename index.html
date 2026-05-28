@@ -45,7 +45,7 @@
             color: var(--text-main);
             min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
-            overflow-x: hidden;
+            overflow-x: hidden; /* Prevent horizontal scroll on mobile */
         }
 
         /* Top Bar (Mobile Only) */
@@ -96,15 +96,24 @@
             transition: background-color 0.3s;
         }
 
-        /* Settings Panel */
+        /* Settings Panel Mobile Defaults */
         .settings-panel {
+            position: fixed;
+            top: 0;
+            right: 0; /* Anchor exactly to the right edge */
+            transform: translateX(100%); /* Push 100% of its own width off screen */
+            width: 85%;
+            max-width: 320px;
+            height: 100vh;
             background: var(--surface-color);
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: background-color 0.3s, transform 0.3s;
-            width: 100%;
-            max-width: 500px;
+            z-index: 20;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, background-color 0.3s;
+        }
+
+        .settings-panel.open {
+            transform: translateX(0); /* Slide in perfectly flush with screen edge */
         }
 
         .settings-header {
@@ -125,9 +134,10 @@
             background: none;
             border: none;
             color: var(--text-main);
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
-            display: none; /* Handled by media query */
+            line-height: 1;
+            padding: 0 5px;
         }
 
         /* Settings Items */
@@ -144,6 +154,7 @@
             display: inline-block;
             width: 50px;
             height: 28px;
+            flex-shrink: 0; /* Prevents the switch from squishing on small screens */
         }
 
         .switch input { 
@@ -264,6 +275,11 @@
             transition: opacity 0.3s;
         }
 
+        .overlay-backdrop.show {
+            display: block;
+            opacity: 1;
+        }
+
         /* Toast */
         .toast {
             position: fixed;
@@ -291,37 +307,9 @@
         }
 
         /* =========================================
-           RESPONSIVE DESIGN LOGIC 
+           DESKTOP RESPONSIVE LAYOUT
            ========================================= */
-
-        /* Default (Mobile First): Settings is an overlay */
-        .settings-panel {
-            position: fixed;
-            top: 0;
-            right: -100%; /* Hidden off-screen */
-            width: 80%;
-            max-width: 350px;
-            height: 100vh;
-            border-radius: 0;
-            z-index: 20;
-            box-shadow: -4px 0 15px rgba(0,0,0,0.2);
-        }
-
-        .settings-panel.open {
-            transform: translateX(-100%);
-        }
-
-        .close-settings {
-            display: block; /* Show 'X' on mobile */
-        }
-
-        .overlay-backdrop.show {
-            display: block;
-            opacity: 1;
-        }
-
-        /* Desktop Mode */
-        @media (min-width: 850px) {
+        @media (min-width: 900px) {
             .mobile-header {
                 display: none; /* Hide top bar & gear icon */
             }
@@ -330,7 +318,10 @@
                 flex-direction: row;
                 align-items: flex-start;
                 justify-content: center;
-                padding-top: 40px;
+                padding-top: 60px;
+                max-width: 900px;
+                margin: 0 auto;
+                gap: 30px; /* Space between main app and settings */
             }
 
             .main-container {
@@ -339,21 +330,20 @@
             }
 
             .settings-panel {
-                position: static;
+                position: static; /* Remove fixed positioning */
+                transform: none; /* Remove slide transform entirely */
                 width: 300px;
                 height: auto;
                 border-radius: 12px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transform: none; /* Reset mobile transform */
-                right: auto;
             }
 
             .close-settings {
-                display: none; /* Hide 'X' on desktop */
+                display: none; /* Hide 'X' button on desktop */
             }
 
             .overlay-backdrop {
-                display: none !important; /* Never show backdrop on desktop */
+                display: none !important; /* Ensure backdrop never shows on desktop */
             }
         }
     </style>
@@ -396,8 +386,7 @@
                     <span class="slider"></span>
                 </label>
             </div>
-            
-            </div>
+        </div>
 
     </div>
 
@@ -429,13 +418,11 @@
         }
 
         function initTheme() {
-            // Check if user manually saved a preference before
             const savedTheme = localStorage.getItem('textVaultTheme');
             
             if (savedTheme !== null) {
                 applyTheme(savedTheme === 'dark');
             } else {
-                // Fallback to Manila Time Logic
                 const manilaTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
                 const currentHour = new Date(manilaTimeString).getHours();
                 const isDark = (currentHour >= 18 || currentHour < 6);
@@ -443,15 +430,12 @@
             }
         }
 
-        // Listen for manual toggle clicks
         themeToggle.addEventListener('change', (e) => {
             const isDark = e.target.checked;
             applyTheme(isDark);
-            // Save the preference in local storage so it survives page reloads
             localStorage.setItem('textVaultTheme', isDark ? 'dark' : 'light');
         });
 
-        // Run on startup
         initTheme();
 
 
@@ -476,15 +460,12 @@
             let result = input;
 
             if (action === 'encrypt') {
-                // Hardcoded to loop 3 times
                 for (let i = 0; i < 3; i++) {
                     result = encrypt(result);
                 }
             } else if (action === 'decrypt') {
-                // Hardcoded to loop 3 times
                 for (let i = 0; i < 3; i++) {
                     result = decrypt(result);
-                    // Abort loop if decyrption fails at any layer
                     if (result.startsWith("Error:")) {
                         break;
                     }
