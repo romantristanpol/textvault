@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TextVault</title>
+    <title>Text Vault</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗝️</text></svg>">
     <style>
         /* Default Light Mode Variables */
         :root {
@@ -210,7 +211,7 @@
         .settings-clock {
             margin-top: auto; 
             padding-top: 30px;
-            padding-bottom: 55px;
+            padding-bottom: 55px; 
             text-align: center;
             color: var(--text-muted);
         }
@@ -289,7 +290,6 @@
             display: block;
         }
 
-        /* Converted Output Box into a textarea for proper selection */
         .output-box {
             width: 100%;
             height: 120px;
@@ -305,7 +305,6 @@
             transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
-        /* Shows a subtle border when user clicks inside it */
         .output-box:focus {
             border-color: var(--primary);
         }
@@ -392,7 +391,7 @@
         /* Toast */
         .toast {
             position: fixed;
-            top: 25%;
+            top: 25%; 
             left: 50%;
             transform: translate(-50%, -50%) scale(0.9);
             background-color: #323232;
@@ -409,7 +408,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             width: 80%;
             max-width: 320px;
-            white-space: pre-line;
+            white-space: pre-line; 
         }
 
         .toast.show {
@@ -470,9 +469,8 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <header class="top-bar">
-        <button class="icon-btn about-btn" onclick="openModal('aboutModal')" aria-label="About TextVault">
+        <button class="icon-btn about-btn" onclick="openModal('aboutModal')" aria-label="About Text Vault">
             <svg viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
             </svg>
@@ -487,7 +485,7 @@
     <div class="app-layout">
         
         <div class="main-container">
-            <h2>TextVault</h2>
+            <h2>🗝️ Text Vault</h2>
             <textarea id="inputText" placeholder="Enter text here..."></textarea>
 
             <div class="button-group">
@@ -496,9 +494,7 @@
             </div>
 
             <div id="outputContainer">
-                <!-- Text updated -->
                 <span class="output-label">Output:</span>
-                <!-- Div converted to a readonly textarea -->
                 <textarea id="outputText" class="output-box" readonly></textarea>
             </div>
         </div>
@@ -546,11 +542,11 @@
     <div class="modal-backdrop" id="aboutModal" onclick="closeModal(event, 'aboutModal')">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>About TextVault</h3>
+                <h3>🗝️ Text Vault</h3>
                 <button class="close-modal" onclick="closeModalForce('aboutModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <p><strong>TextVault</strong> is a fast, secure, entirely client-side text scrambler designed to protect sensitive messages.</p>
+                <p><strong>Text Vault</strong> is a fast, secure, entirely client-side text scrambler designed to protect sensitive messages.</p>
                 <p><strong>How it works:</strong> By running recursive Base64 encoding completely in your browser, it adds a 3x multiplier security layer of obfuscation to your text. Because everything happens locally, your data never leaves your device and is never sent to any server.</p>
                 <p><strong>Auto-Clipboard:</strong> Enabled by default, this feature automatically copies your encrypted or decrypted result directly to your clipboard the moment you press a button. You can toggle this off in the settings if you prefer manual copying.</p>
                 
@@ -558,7 +554,7 @@
                     Created by Tristan using Gemini AI<br>
                     <a href="https://github.com/romantristanpol/textvault" target="_blank" style="color: var(--primary); text-decoration: none;">View on GitHub</a>
                 </p>
-                <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;"><em>Version 1.8.0</em></p>
+                <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;"><em>Version 1.11.0</em></p>
             </div>
         </div>
     </div>
@@ -701,7 +697,6 @@
                 }
             }
 
-            // Updated from innerText to value since it is now a textarea
             outputBox.value = result;
 
             if (result && result.startsWith("Error:")) {
@@ -744,24 +739,50 @@
                 navigator.clipboard.writeText(text).then(() => {
                     showToast(successMessage, false);
                 }).catch(err => {
-                    console.error('Failed to copy: ', err);
+                    console.error('Modern copy failed: ', err);
+                    fallbackCopyTextToClipboard(text, successMessage);
                 });
             } else {
-                let textArea = document.createElement("textarea");
-                textArea.value = text;
-                textArea.style.position = "fixed";
-                textArea.style.left = "-999999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showToast(successMessage, false);
-                } catch (err) {
-                    console.error('Fallback copy failed', err);
-                }
-                document.body.removeChild(textArea);
+                fallbackCopyTextToClipboard(text, successMessage);
             }
+        }
+
+        function fallbackCopyTextToClipboard(text, successMessage) {
+            let textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Prevent keyboard from popping up on mobile devices
+            textArea.setAttribute('readonly', '');
+            
+            // Keep it hidden but part of the active document flow to bypass strict browser rules
+            textArea.style.position = "fixed";
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.width = "2em";
+            textArea.style.height = "2em";
+            textArea.style.padding = "0";
+            textArea.style.border = "none";
+            textArea.style.outline = "none";
+            textArea.style.boxShadow = "none";
+            textArea.style.background = "transparent";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                let successful = document.execCommand('copy');
+                if (successful) {
+                    showToast(successMessage, false);
+                } else {
+                    showToast("Browser blocked auto-copy. Please copy manually.", true);
+                }
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+                showToast("Browser blocked auto-copy. Please copy manually.", true);
+            }
+            
+            document.body.removeChild(textArea);
         }
     </script>
 
